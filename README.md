@@ -47,7 +47,7 @@ ylabel('Magnitude ');
 title(' Frequency Response of Chebyshev IIR LPF');
 
 ```
-##CONSOLE:
+## CONSOLE:
 ```
 
 Enter the pass band frequency (Radians )= 0.3*%pi
@@ -181,7 +181,7 @@ ylabel('Magnitude');
 title('Frequency Response of Chebyshev IIR High-Pass Filter');
 ```
 
-##CONSOLE:
+## CONSOLE:
 ```
 
 Enter the pass band frequency (Radians )= 0.6*%pi
