@@ -23,10 +23,11 @@ omegas=(2/T)*tan(ws/2);
 disp(omegas,'omegas=');
 //Order of the filter
 N=acosh(sqrt(((10^(0.1*alphas))-1)/((10^(0.1*alphap))-1)))/(acosh(omegas/omegap));
+16
 disp(N,'N=');
 N=ceil(N);
 disp(N,'Round off value of N=');
-//Cut off frequency
+
 omegac=omegap/(((10^(0.1*alphap)) -1)^(1/(2* N)));
 disp(omegac,'omegac=');
 Epsilon = sqrt ((10^(0.1*alphap))-1);
@@ -35,226 +36,131 @@ disp(Epsilon,'Epsilon=');
 disp(gn,'Gain');
 disp(pols,'Poles');
 hs=poly(gn,'s','coeff')/real(poly(pols,'s'));
-disp(hs,'Analog Low pass Chebyshev Filter Transfer function');
+disp(hs,'Analog Low pass Chebyshev Filter Transfer function');11
 z=poly(0,'z');//Defining variable z
 Hz=horner(hs,(2/ T)*((z -1)/(z+1)))// Bilinear Transformation
 disp(Hz,'Digital LPF Transfer function H(Z)=');
 HW=frmag(Hz,512); // Frequency response
+
 w=0:%pi/511:%pi ;
 plot(w/%pi,abs(HW));
 xlabel(' Normalized Digital Frequency w');
 ylabel('Magnitude ');
 title(' Frequency Response of Chebyshev IIR LPF');
 
-```
-## CONSOLE:
-```
-
-Enter the pass band frequency (Radians )= 0.3*%pi
-
-Enter the stop band frequency (Radians )= 0.6*%pi
-
- Enter the pass band attenuation (dB)=3
-
- Enter the stop band attenuation(dB)=20
-
-Enter the Value of sampling Time=1
 
 
-   1.0190509
 
-  "omegap="
+   
 
-   2.7527638
-
-  "omegas="
-
-   1.8116778
-
-  "N="
-
-   2.
-
-  "Round off value of N="
-
-   1.0202615
-
-  "omegac="
-
-   0.9976283
-
-  "Epsilon="
-
-   0.5204667
-
-  "Gain"
-
-  -0.3285928 + 0.7919631i  -0.3285928 - 0.7919631i
-
-  "Poles"
-
-           0.5204667           
-   --------------------------  
-   0.7351788 +0.6571856s +s^2  
-
-  "Analog Low pass Chebyshev Filter Transfer function"
-
-   0.5204667 +1.0409335z +0.5204667z^2  
-   -----------------------------------  
-   3.4208077 -6.5296424z +6.0495499z^2  
-
-  "Digital LPF Transfer function H(Z)="
+  
 ```
 ## PROGRAM (HPF): 
 ```
 clc;
-close;
+clear;
+close();
 
-// ============================
-// User Inputs
-// ============================
-wp = input('Enter the pass band frequency (Radians )= ');  // Passband edge > Stopband edge
-ws = input('Enter the stop band frequency (Radians )= ');
-alphap = input('Enter the pass band attenuation (dB)= ');
-alphas = input('Enter the stop band attenuation (dB)= ');
-T = input('Enter the Value of sampling Time= ');
+// --- User Inputs ---
+wp = input("Enter the pass band frequency (Radians)= ");   
+ws = input("Enter the stop band frequency (Radians)= ");   
+alphap = input("Enter the pass band attenuation (dB)= ");
+alphas = input("Enter the stop band attenuation (dB)= ");
+T = input("Enter the sampling time= ");
 
-// ============================
-// Pre-warping (Bilinear Transformation)
-// ============================
-omegap = (2/T)*tan(wp/2);   // Passband edge (analog)
-disp(omegap,'omegap=');
-omegas = (2/T)*tan(ws/2);   // Stopband edge (analog)
-disp(omegas,'omegas=');
+// -------------------------
+// Pre-warp (bilinear)
+// -------------------------
+omegap = (2/T) * tan(wp/2);
+omegas = (2/T) * tan(ws/2);
 
-// ============================
-// Order of the HPF
-// ============================
-// For HPF: use acosh(omegap/omegas)
-N = acosh(sqrt(((10^(0.1*alphas))-1)/((10^(0.1*alphap))-1))) / acosh(omegap/omegas);
-disp(N,'N=');
+// -------------------------
+// Chebyshev order (analytical)
+// -------------------------
+N = acosh(sqrt(((10^(0.1*alphas))-1)/((10^(0.1*alphap))-1))) / acosh(omegas/omegap);
 N = ceil(N);
-disp(N,'Round off value of N=');
 
-// ============================
-// Cutoff frequency
-// ============================
-omegac = omegap / (((10^(0.1*alphap))-1)^(1/(2*N)));
-disp(omegac,'omegac=');
+// -------------------------
+// Cutoff & epsilon
+// -------------------------
+omegac = omegap / (((10^(0.1*alphap)) - 1)^(1/(2*N)));
+Epsilon = sqrt((10^(0.1*alphap)) - 1);
 
-// ============================
-// Chebyshev Prototype (Normalized LPF)
-// ============================
-Epsilon = sqrt((10^(0.1*alphap))-1);
-disp(Epsilon,'Epsilon=');
+// -------------------------
+// Poles & gain from zpch1
+// -------------------------
+[pols, gn] = zpch1(N, Epsilon, omegap);
 
-[pols, gn] = zpch1(N, Epsilon, 1);   // normalized LPF prototype at 1 rad/s
-disp(gn,'Gain');
-disp(pols,'Poles');
+// -------------------------
+// Display intermediate values
+// -------------------------
+mprintf("\nomegap= %f\n", omegap);
+mprintf("omegas= %f\n", omegas);
+mprintf("N= %f\n", N);
+mprintf("Round off value of N= %d\n", N);
+mprintf("omegac= %f\n", omegac);
+mprintf("Epsilon= %f\n", Epsilon);
+mprintf("Gain %f\n\n", gn);
 
-s = poly(0,'s');   // Laplace variable
-hs = poly(gn,'s','coeff') / real(poly(pols,'s'));
-disp(hs,'Analog Normalized Chebyshev LPF');
+mprintf("Poles\n");
+for i = 1:length(pols)
+    p = pols(i);
+    if imag(p) >= 0 then
+        mprintf(" - %g + %gi\n", real(p), imag(p));
+    else
+        mprintf(" - %g - %gi\n", real(p), abs(imag(p)));
+    end
+end
+mprintf("\n");
 
-// ============================
-// LPF → HPF Transformation (s -> omegac/s)
-// ============================
-sh = horner(hs, omegac/s);
-disp(sh,'Analog Chebyshev High-Pass Filter');
+// -------------------------
+// Build analog Low-Pass H(s) (internal, not printed)
+// -------------------------
+s = poly(0, 's');  
+hs_LP = gn / real(poly(pols, 's')); // analog LPF
 
-// ============================
-// Bilinear Transformation: s -> (2/T)*((z-1)/(z+1))
-// ============================
-z = poly(0,'z');   // z-domain variable
-Hz = horner(sh, (2/T) * ((z-1)/(z+1)));
-disp(Hz,'Digital HPF Transfer function H(Z)=');
+// -------------------------
+// Convert LPF -> HPF
+// -------------------------
+hs_HP = horner(hs_LP, omegac^2 / s); // LP -> HP transform
+mprintf("\nAnalog High-Pass Chebyshev Transfer function H_HP(s)=\n\n");
+disp(hs_HP);
 
-// ============================
-// Frequency Response
-// ============================
-HW = frmag(Hz, 512);
+// -------------------------
+// Bilinear transform -> Digital HPF H(z)
+// -------------------------
+z = poly(0, 'z'); 
+Hz_HP = horner(hs_HP, (2/T)*((z-1)/(z+1))); // s -> z
+mprintf("\nDigital High-Pass Transfer function H_HP(z)=\n\n");
+disp(Hz_HP);
+
+// -------------------------
+// Frequency response
+// -------------------------
+HW_HP = frmag(Hz_HP, 512);
 w = 0:%pi/511:%pi;
 
-plot(w/%pi, abs(HW));
-xlabel('Normalized Digital Frequency ×π rad/sample');
-ylabel('Magnitude');
-title('Frequency Response of Chebyshev IIR High-Pass Filter');
-```
-
-## CONSOLE:
-```
-
-Enter the pass band frequency (Radians )= 0.6*%pi
-
-Enter the stop band frequency (Radians )= 0.3*%pi
-
-Enter the pass band attenuation (dB)= 3
-
-Enter the stop band attenuation (dB)= 20
-
-Enter the Value of sampling Time= 1
+figure();
+plot(w/%pi, abs(HW_HP));
+xlabel("Normalized Digital Frequency w");
+ylabel("Magnitude");
+title("Frequency Response of Chebyshev IIR High-Pass Filter");
+xgrid();
 
 
-   2.7527638
-
-  "omegap="
-
-   1.0190509
-
-  "omegas="
-
-   1.8116778
-
-  "N="
-
-   2.
-
-  "Round off value of N="
-
-   2.7560340
-
-  "omegac="
-
-   0.9976283
-
-  "Epsilon="
-
-   0.5011886
-
-  "Gain"
-
-  -0.3224498 + 0.7771576i  -0.3224498 - 0.7771576i
-
-  "Poles"
-
-           0.5011886           
-   --------------------------  
-   0.7079478 +0.6448997s +s^2  
-
-  "Analog Normalized Chebyshev LPF"
-
-              0.5011886s^2              
-   -----------------------------------  
-   7.5957232 +1.7773653s +0.7079478s^2  
-
-  "Analog Chebyshev High-Pass Filter"
-
-   0.1433786 -0.2867572z +0.1433786z^2  
-   -----------------------------------  
-       0.4915365 +0.6814259z +z^2       
-
-  "Digital HPF Transfer function H(Z)="
+   
 ```
 
 
 ## OUTPUT (LPF) : 
 
-<img width="1918" height="1079" alt="1c" src="https://github.com/user-attachments/assets/db05a8cb-36c1-4490-8222-31ff3cac7d74" />
+<img width="758" height="598" alt="image" src="https://github.com/user-attachments/assets/805e89c6-6af6-4664-83d2-786cf309978f" />
 
 
 ## OUTPUT (HPF) : 
 
-<img width="1919" height="1079" alt="2c" src="https://github.com/user-attachments/assets/e4882520-6c26-4fd5-8055-678aaa1e41d7" />
+<img width="762" height="597" alt="image" src="https://github.com/user-attachments/assets/5289c019-9141-40eb-9733-886eee806313" />
+
 
 
 ## RESULT: 
